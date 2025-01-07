@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home - Django App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" rel="stylesheet">
+</head>
+
+<body class="font-sans bg-gray-400 min-h-screen overflow-auto">
+
+    <nav class="bg-gradient-to-r from-blue-500 to-purple-500 rounded-bl-3xl rounded-br-3xl p-2 shadow-lg sticky top-0 z-50 flex justify-center items-center text-center">
+        <span class="text-white text-lg font-semibold">Conveys hidden tracking capabilities</span>
+    </nav>
+    
+    <div class="flex items-center justify-center h-screen">
+        <main id="card-container" class="mt-5 w-full text-black bg-white rounded-xl border-t border-gray-200 p-2.5 shadow-lg backdrop-blur-lg px-5 py-5 overflow-auto" style="width:600px; height: 300px;">
+        </main>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.14.0/firebase-app.js';
+        import { getDatabase, ref, get } from 'https://www.gstatic.com/firebasejs/9.14.0/firebase-database.js';
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyBT8KtCVmeP98tLlIGoE07a4EPoVedEWFM",
+            authDomain: "darkmatter-78480.firebaseapp.com",
+            databaseURL: "https://darkmatter-78480-default-rtdb.firebaseio.com",
+            projectId: "darkmatter-78480",
+            storageBucket: "darkmatter-78480.appspot.com",
+            messagingSenderId: "969084296444",
+            appId: "1:969084296444:web:48fb4175126b112ed70b79"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        const dbRef = ref(db, 'Device');  // Target the "Device" node
+        get(dbRef).then((snapshot) => {
+            const cardContainer = document.getElementById('card-container');
+
+            if (snapshot.exists()) {
+                const data = snapshot.val();
+
+                Object.keys(data).forEach((key) => {
+                    const card = document.createElement('div');
+                    card.classList.add('bg-white', 'rounded-lg', 'shadow-md', 'p-4', 'mb-4', 'w-full', 'border', 'hover:shadow-lg', 'transition-all', 'duration-300');
+
+                    card.innerHTML = `
+                        <div class="flex justify-between items-center">
+                            <h3 class="text-xl font-semibold mb-2 text-gray-800">${key}</h3>
+                            <span class="text-gray-600 text-lg">
+                                <i class="fas fa-arrow-right"></i>
+                            </span>
+                        </div>
+                    `;
+
+                    // Add click event to navigate to the new page with the node ID
+                    card.addEventListener('click', () => {
+                        window.location.href = `/home/?id=${key}`;
+                    });
+
+                    cardContainer.appendChild(card);
+                });
+            } else {
+                cardContainer.innerHTML = `<p class="text-center text-xl text-gray-600">No device available</p>`;
+            }
+        }).catch((error) => {
+            console.error("Error reading data: ", error);
+        });
+    </script>
+</body>
+</html>
