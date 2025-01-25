@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Image Generator</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #9b4dca, #6200ea);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            padding: 0;
+            color: white;
+            overflow: hidden;
+            flex-direction: column;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 960px;
+            text-align: center;
+        }
+
+        /* Card Style */
+        .card {
+            background-color: #fff;
+            border-radius: 16px;
+            box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.2);
+            margin-bottom: 24px;
+            padding: 16px;
+            overflow: hidden;
+        }
+
+        /* Image display inside card */
+        .card img {
+            width: 100%;
+            height: 400px;
+            object-fit: cover;
+            border-radius: 12px;
+        }
+
+        /* Input field and button styling */
+        .card input,
+        .card button {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            margin: 12px 0;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .card input {
+            background-color: #f1f1f1;
+        }
+
+        .card input:focus {
+            border-color: #6200ea;
+        }
+
+        .card button {
+            background-color: #6200ea;
+            color: white;
+            cursor: pointer;
+            border: none;
+        }
+
+        .card button:hover {
+            background-color: #3700b3;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 6px;
+            background-color: #ddd;
+            margin-top: 16px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-bar .progress {
+            width: 0;
+            height: 100%;
+            background-color: #4caf50;
+            border-radius: 10px;
+        }
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .card {
+                margin: 10px;
+            }
+
+            .card img {
+                height: 300px;
+            }
+
+            .container {
+                padding: 16px;
+            }
+        }
+
+        /* Loading spinner */
+        .spinner {
+            display: none;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #6200ea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 2s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Card for Image Display -->
+        <div class="card">
+            <div class="card-image">
+                <!-- Initially show a placeholder image -->
+                <img id="generatedImage" src="https://lablab.ai/_next/image?url=https%3A%2F%2Fimagedelivery.net%2FK11gkZF3xaVyYzFESMdWIQ%2F6c56e928-3848-4367-5d6b-3006afe68300%2Ffull&w=3840&q=75" alt="Generated Image">
+            </div>
+        </div>
+
+        <!-- Card for Input -->
+        <div class="card">
+            <input type="text" id="inputPrompt" placeholder="Enter your prompt" />
+            <button onclick="generateImage()">Generate Image</button>
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="progress-bar" id="progressBar">
+            <div class="progress" id="progress"></div>
+        </div>
+
+        <!-- Loading Spinner -->
+        <div class="spinner" id="loadingSpinner"></div>
+    </div>
+
+    <script>
+        function generateImage() {
+            const prompt = document.getElementById('inputPrompt').value;
+            if (!prompt) {
+                alert('Please enter a prompt');
+                return;
+            }
+
+            // Show progress bar and spinner
+            document.getElementById('progressBar').style.display = 'block';
+            document.getElementById('loadingSpinner').style.display = 'block';
+
+            const encodedPrompt = encodeURIComponent(prompt);
+            const imageUrl = `https://image.pollinations.ai/prompt/${encodedPrompt}?width=960&height=720&seed=42&model=flux&nologo=true`;
+
+            // Simulate loading (here for 2 seconds)
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += 10;
+                document.getElementById('progress').style.width = `${progress}%`;
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    document.getElementById('generatedImage').src = imageUrl; // Set generated image
+                    document.getElementById('progressBar').style.display = 'none'; // Hide progress bar
+                    document.getElementById('loadingSpinner').style.display = 'none'; // Hide spinner
+                }
+            }, 200); // Adjust for speed of the simulation
+        }
+    </script>
+
+</body>
+</html>
